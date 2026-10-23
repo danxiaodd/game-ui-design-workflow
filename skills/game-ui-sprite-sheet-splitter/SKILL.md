@@ -7,9 +7,11 @@ description: Splits a generated game UI sprite sheet or component board into ind
 
 把组件拆解阶段生成的整张雪碧图进一步切成独立透明 PNG，并打包成可下载 ZIP。不要把“生成组件清单”误当成“已经完成像素级切图”。
 
+独立调用时先恢复项目状态；没有 `workflow-state.json` 就运行 `workflow_state <project> init`，不要求 GDD。实际看过的既有概念图/源图可用 `source <path> --role visual-reference --evidence '<查看与用途>'` 登记。按本次入口登记产物，不依赖先运行总控。
+
 ## 前置条件
 
-读取：
+页面组件包任务读取已有的以下资料：
 
 - 已批准的组件拆解结果
 - `contracts/style-contract.yaml`
@@ -17,9 +19,11 @@ description: Splits a generated game UI sprite sheet or component board into ind
 - `contracts/asset-manifest.yaml`
 - `contracts/sprite-contract.yaml`（存在时）
 
+独立图片批次任务只需实际源图、目标布局/区域、命名和输出要求；不要求先做组件拆解，也不要求 style/component/页面契约。
+
 输入雪碧图必须是实际存在的图片文件。若只有提示词或组件列表，先完成组件图生成。
 
-最终单元素 PNG 必须去掉全部文字，包括标题、按钮文案、数字标签、占位文字、水印和说明编号。文字不是组件图形的一部分。
+默认 UI 组件图形不带标题、按钮文案、数字标签和说明编号；文字优先交给 Unity/TMP。用户明确要求保留字形/数字素材时记录用途和例外，不自动抹掉原始内容。
 
 ## 适用输入
 
@@ -46,7 +50,25 @@ description: Splits a generated game UI sprite sheet or component board into ind
 - 相似状态按固定顺序排列，但不绘制网格线。
 - 不要把一个组件拆散成多个远离的碎片。
 
-## 自动拆分
+## 确定性裁剪优先
+
+布局固定时先使用 `process_sprites split <source.png> --layout <layout.yaml> --output <new-version-dir>`：
+
+```yaml
+mode: grid
+columns: 2
+rows: 2
+margin: 8
+spacing: 8
+names: [gold-icon, gem-icon, energy-icon, key-icon]
+require_transparent: true
+```
+
+网格按从左到右、从上到下排列；尺寸必须整除。区域裁剪使用 `mode: regions`、`items: [{name: gold-icon, rect: [x, y, width, height]}]`，坐标从原图左上角计算。Alpha 裁剪使用 `mode: trim`、`name: gold-icon`、`padding: 4`，保留原始尺寸和偏移，不伪造缺失边缘。
+脚本生成 PNG、源哈希/坐标清单、联系表和 ZIP；输出目录必须不存在。运行 `process_sprites verify <dir>` 校验数量、命名、尺寸、哈希及压缩包内容；再人工检查。
+不同的剪裁版本使用不同目录，确认原始图片的实际布局后再写参数，不让模型猜网格。
+
+## 原有连通区域拆分
 
 执行：
 
@@ -96,7 +118,7 @@ items:
 2. 无法重生时，对文字区域做蒙版修复或内容填充，补回底板纹理。
 3. 修复后重新检查，不能只把文字裁掉而留下透明洞、色块或残影。
 
-不得把含文字的切片标记为批准。
+不得把含非预期文字的切片标记为批准；明确授权的字形/数字素材按其用途验收。
 
 ## 参数调整
 
@@ -136,11 +158,11 @@ items:
 --padding 8
 ```
 
-重新输出时显式使用 `--force`，不得静默覆盖已批准包。
+优先输出到新版本目录。仅在用户明确要求替换可丢弃的中间结果时使用旧脚本的 `--force`，不得覆盖已批准包。
 
 ## 项目契约
 
-将结果写入 `contracts/sprite-contract.yaml`：
+页面组件包将结果写入 `contracts/sprite-contract.yaml`；独立图片批次以输出的 `sprite-manifest.yaml` 为资源明细，不要求建立整套 UI 契约：
 
 - 源雪碧图与源页面
 - 检测模式和阈值
@@ -197,10 +219,20 @@ effect-crescent-glow.png
 - 每个元素是独立透明 PNG
 - 自动坐标和实际尺寸已记录
 - 人工验收通过
-- `review.text_free: true`
+- 默认无文字组件包记录 `review.text_free: true`；字形/数字任务记录明确例外
 - ZIP 包存在且可解压
-- 最终 PNG 使用语义名称并关联 component ID
-- 项目严格校验通过
-- `quickstart.md` 记录解压和使用方式
+- 最终 PNG 使用语义名称；页面组件包还需关联 component ID
+- 独立批次通过 `process_sprites verify`；完整 UI 项目通过契约严格校验
+- 交付说明记录解压和使用方式；项目已有 `quickstart.md` 时更新该文件
 
 需要继续生成 Atlas 和引擎 JSON 时，调用 `game-ui-asset-pipeline`。
+
+## 可移植脚本调用（Codex / Cursor）
+
+以下 `<SKILL_DIR>` 取本次实际加载的 SKILL.md 所在绝对目录。
+
+```bash
+python3 <SKILL_DIR>/scripts/run.py <tool_name> <arguments>
+```
+
+本文所有 `python3 scripts/<tool_name>.py ...` / `<tool_name> ...` 命令均可用以上方式执行；工具名不带 `.py`。入口自动定位仓库或安装时一起部署的 runtime，不要求当前目录恰好是本仓库。模板/配置在 runtime 内，工作产物使用用户项目的绝对路径；`init_project` 用 `--workspace` 指定输出集合。优先恢复状态，生成与批准分别登记；无需 Figma。

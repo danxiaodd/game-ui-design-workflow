@@ -26,9 +26,6 @@ MARKDOWN_FILES = (
     "plan.md",
     "tasks.md",
     "quickstart.md",
-    "gdd.md",
-    "prd.md",
-    "interaction.md",
 )
 PLANNING_FILES = ("gdd.md", "prd.md", "interaction.md")
 PLANNING_STATUS_PATTERN = re.compile(
@@ -119,25 +116,9 @@ def validate_dimensions(value: Any, label: str, report: Report) -> None:
 
 
 def inspect_png(path: Path) -> tuple[list[int], bool]:
-    with path.open("rb") as stream:
-        header = stream.read(33)
-        if len(header) < 33 or header[:8] != b"\x89PNG\r\n\x1a\n":
-            raise ValueError("invalid PNG signature or IHDR")
-        width, height = struct.unpack(">II", header[16:24])
-        color_type = header[25]
-        has_alpha = color_type in {4, 6}
-        while True:
-            length_bytes = stream.read(4)
-            if len(length_bytes) != 4:
-                break
-            length = struct.unpack(">I", length_bytes)[0]
-            chunk_type = stream.read(4)
-            if chunk_type == b"tRNS":
-                has_alpha = True
-            stream.seek(length + 4, 1)
-            if chunk_type == b"IEND":
-                break
-    return [width, height], has_alpha
+    from inspect_image import inspect
+    result = inspect(path)
+    return result['dimensions'], result['has_alpha']
 
 
 def parse_svg_length(value: str | None) -> int | None:
@@ -167,6 +148,10 @@ def inspect_image(path: Path) -> tuple[list[int], bool] | None:
         return inspect_png(path)
     if suffix == ".svg":
         return inspect_svg(path)
+    if suffix in {'.jpg', '.jpeg', '.webp', '.gif'}:
+        from inspect_image import inspect
+        result = inspect(path)
+        return result['dimensions'], result['has_alpha']
     return None
 
 
@@ -191,7 +176,9 @@ def planning_doc_status(text: str) -> str | None:
 def validate_planning_docs(
     project: Path, assets: dict[str, Any], report: Report
 ) -> None:
-    """Ensure GDD/PRD/interaction exist and gate page generation readiness."""
+    """Legacy planning is optional; external GDD remains authoritative."""
+    if (project / 'workflow-state.json').is_file():
+        return
     statuses: dict[str, str | None] = {}
     for name in PLANNING_FILES:
         path = project / name
@@ -224,11 +211,6 @@ def validate_planning_docs(
             "planning docs not approved before visual generation: "
             + ", ".join(unapproved)
             + " (approve gdd.md / prd.md / interaction.md or document an explicit skip)"
-        )
-    if len(statuses) < len(PLANNING_FILES):
-        report.warn(
-            "visual assets exist but one or more planning docs are missing; "
-            "page generation should follow approved GDD/PRD/interaction"
         )
 
 
@@ -478,6 +460,13 @@ def validate_assets(
                             f"{label}: transparent_background=true but the file "
                             "has no alpha channel"
                         )
+        if output and output.is_file() and output.suffix.lower() in {'.png', '.webp'} and asset.get('transparent_background') is True:
+            try:
+                from inspect_image import inspect
+                if not inspect(output)['transparent_background']:
+                    report.error(f'{label}: no actual transparent background pixels or subject')
+            except (OSError, ValueError) as error:
+                report.error(f'{label}: cannot inspect alpha pixels: {error}')
         if asset.get("approved") is True and status != "approved":
             report.error(f"{label}: approved=true requires status=approved")
 
@@ -744,6 +733,20 @@ def validate(project: Path, strict: bool) -> Report:
         report.error(f"project directory does not exist: {project}")
         return report
     project_id = project.name
+    if (project / 'workflow-state.json').is_file():
+        try:
+            from workflow_state import resume
+            progress = resume(project)
+            for key, status in progress['artifacts'].items():
+                if status == 'modified-or-missing':
+                    report.error(f'workflow artifact {key}: {status}')
+            if progress['sources_changed']:
+                report.error('workflow sources changed; read and review before continuing')
+        except (OSError, ValueError, KeyError, TypeError, RecursionError) as error:
+            report.error(f'invalid workflow state: {error}')
+        # Direction/concept-only workspaces do not need downstream UI contracts yet.
+        if not (project / 'contracts').exists():
+            return report
     validate_id(project_id, "project directory", report)
     validate_markdown(project, report)
 

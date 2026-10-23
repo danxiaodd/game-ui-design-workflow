@@ -1,0 +1,4 @@
+interface:
+  display_name: "可选游戏策划与交互"
+  short_description: "按用户实际需求补写游戏策划、产品需求与页面交互，不阻断已有资料"
+  default_prompt: "使用 $game-ui-product-design 根据我的现有资料完成当前范围内的任务，保留真实产物和确认记录。"

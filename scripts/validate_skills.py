@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Cursor skill metadata, size, and local Markdown references."""
+"""Validate Codex/Cursor skill metadata, size, and local Markdown references."""
 
 from __future__ import annotations
 
@@ -30,6 +30,8 @@ def validate_skill(path: Path) -> list[str]:
     name = metadata.get("name")
     if not isinstance(name, str) or not NAME_PATTERN.fullmatch(name):
         errors.append(f"{path}: invalid skill name {name!r}")
+    elif len(name) > 64:
+        errors.append(f"{path}: name exceeds 64 characters")
     elif name != path.parent.name:
         errors.append(f"{path}: name must match directory {path.parent.name!r}")
     description = metadata.get("description")

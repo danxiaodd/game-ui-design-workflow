@@ -1,727 +1,170 @@
-# 游戏 UI 技能调用指南
+# 使用说明：Codex / Cursor
 
-本文说明如何在 Cursor 中安装、调用和串联本仓库的技能。
+在仓库中运行以下命令；安装到其他项目后，将 `python3 scripts/<tool>.py` 替换为 `python3 <实际技能目录>/scripts/run.py <tool>`。该入口与当前工作目录无关。路径包含空格时按 shell 规则加引号。Windows 使用 `python`。
 
-## 1. 技能清单
-
-- `game-ui-workflow`：总控技能。适合从策划/PRD/交互、规范、页面延展一直做到视觉稿和组件交付。
-- `game-ui-product-design`：**生成第 1 步**，撰写并门禁 `gdd.md`、`prd.md`、`interaction.md`。
-- `game-ui-specification`：生成或维护 UI 规范与 `style-contract.yaml`。
-- `game-ui-extension`：扩展玩家旅程、页面地图与 `screen-contract.yaml`。
-- `game-ui-page-generator`：一次生成一个完整页面的方案、提示词和视觉稿（要求策划三文档已批准）。
-- `game-ui-component-breakdown`：从已批准页面拆解独立组件素材。
-- `game-ui-sprite-sheet-splitter`：将组件雪碧图切成单元素透明 PNG 并打包 ZIP。
-- `game-ui-asset-pipeline`：语义命名、9-slice、Atlas 和引擎 JSON 交付。
-
-一般项目优先调用 `game-ui-workflow`；只修改某一阶段时调用对应子技能。
-
-生图前门禁由 `game-ui-product-design` 负责：
-
-- `gdd.md`：游戏策划方案
-- `prd.md`：产品需求文档
-- `interaction.md`：UI 交互逻辑
-
-## 2. 安装技能
-
-### 安装到当前项目
-
-在目标项目根目录执行：
+## 安装与发现
 
 ```bash
-mkdir -p .cursor/skills
-cp -R /Users/csl/game-ui-design-workflow/skills/* .cursor/skills/
+python3 -m pip install -r requirements.txt
+python3 scripts/install_skills.py --project /Projects/MyGame --agent codex
+# 或 --personal --agent codex；Cursor 使用 --agent cursor
 ```
 
-这种方式会把技能随项目共享给团队。
+Codex 项目/个人位置分别为 `.agents/skills`、`~/.agents/skills`；Cursor 为 `.cursor/skills`、`~/.cursor/skills`。安装时部署共享 runtime 的版本目录及每技能指针；不要手动只复制一个 SKILL.md。不要同时安装同名项目版与个人版造成重复选择。需要更新时用 `--force`；旧 runtime 留给仍引用它的技能，可在检查无引用后手动清理。
 
-### 安装为个人技能
+新建一个与仓库无关的项目目录后运行安装器，再让宿主列出 `game-ui-workflow` 等技能。宿主若没有重新加载技能，重启/重新加载；静态检查和安装测试不能证明每个宿主 UI 已实际调用。
+
+## 路径一：已有 GDD → 方向 → 概念图
+
+```text
+使用 $game-ui-workflow，读取 /Projects/MyGame/Docs/GDD.md 和指定系统分册。
+输出到 /Projects/MyGame/art-workflow。先给出美术视觉方向案，明确推荐并等待我确认。
+原策划是规则依据，缺失的视觉信息使用标明默认值，不重做策划三文档。
+```
+
+Agent 先实际读取资料，提炼 `source-brief.md`：定位、玩法、世界观、角色、场景/设施、镜头与 UI。PDF/DOCX/图片按当前工具读取；读不了要说明。
 
 ```bash
-mkdir -p ~/.cursor/skills
-cp -R /Users/csl/game-ui-design-workflow/skills/* ~/.cursor/skills/
+python3 scripts/workflow_state.py /Projects/MyGame/art-workflow init --source /Projects/MyGame/Docs/GDD.md
+python3 scripts/workflow_state.py /Projects/MyGame/art-workflow source /Projects/MyGame/Docs/GDD.md \
+  --evidence '已读第1–4章；视觉提炼见 source-brief.md'  # 仅在真实读完后记录
 ```
 
-个人技能可用于本机的其他项目。不要复制到 `~/.cursor/skills-cursor/`，该目录由 Cursor 管理。
-
-安装后新建或继续一个 Agent 对话即可。技能不要求固定斜杠命令；直接在请求中写出技能名最可靠。
-
-## 3. 初始化 UI 项目
-
-在本仓库根目录执行：
+方向案和首图提示词完成后登记：
 
 ```bash
-python3 scripts/init_project.py <project-id>
+python3 scripts/workflow_state.py /Projects/MyGame/art-workflow record direction-v001 \
+  --kind direction --file /path/to/art-direction-v001.md --prompt /path/to/concept-prompt-v001.md
 ```
 
-`project-id` 只使用小写字母、数字和连字符，例如：
+到此停止。`approve` 只在用户已经实际确认具体版本后执行，`--evidence` 保存原话/记录位置，不使用示例文字冒充真实批准。
 
 ```bash
-python3 scripts/init_project.py moon-palace-rpg
+python3 scripts/workflow_state.py /Projects/MyGame/art-workflow approve direction-v001 \
+  --evidence '<真实用户确认方向 V001 的依据>'
 ```
 
-生成位置：
-
-```text
-specs/moon-palace-rpg/
-├── gdd.md
-├── prd.md
-├── interaction.md
-├── spec.md
-├── research.md
-├── plan.md
-├── tasks.md
-├── quickstart.md
-├── contracts/
-├── prompts/
-└── assets/
-```
-
-如果希望 Agent 自动初始化，可以直接调用总控技能：
-
-```text
-使用 game-ui-workflow 新建项目 moon-palace-rpg。
-这是一个国风神话卡牌 RPG，手机竖屏 9:16，先完成需求澄清和 UI 规范。
-请把所有产物写入 specs/moon-palace-rpg，不要只在对话中回答。
-```
-
-## 4. 引用需求和图片
-
-在 Cursor 对话中通过 `@` 引用项目文档、参考图或已有视觉稿：
-
-```text
-使用 game-ui-workflow。
-读取 @specs/moon-palace-rpg/spec.md 和 @references/home.png，
-分析参考图的色彩、材质、光源和布局，但不要复刻其中的商标或角色。
-```
-
-推荐至少提供：
-
-- 游戏类型与核心玩法
-- 目标平台和比例
-- 首个页面
-- 视觉关键词或参考图片
-- 是否需要实际生图
-- 需要拆解的组件范围
-
-信息不足时，技能会使用可调整的默认值；题材、平台、比例或交付范围不明确时会先询问。
-
-## 5. 操作指引（第 1 步起）
-
-推荐按「第 1 步策划与 PRD → 原型 → 风格 → 延展 → 拆解 → 雪碧图 → Atlas」推进。完整生成时**必须从第 1 步开始**。
-
-### 第一步：策划与 PRD（生成第一步，必做）
-
-```text
-使用 game-ui-workflow，当前执行第 1 步“策划与 PRD”。
-或：使用 game-ui-product-design，读取 @specs/<project-id>。
-完成 gdd.md、prd.md、interaction.md，完成后停止等我批准。
-未批准前不要生成页面视觉。
-```
-
-检查：三文档 `status: approved`；核心循环、P0 需求与分页面状态机齐全。
-
-进入下一步的条件：三文档已批准，或 `quickstart.md` 已记录跳过原因。
-
-### 第二步：原型生成视觉
-
-目标：先用一个基准页面验证题材、构图和信息层级，不急于生成整套页面。
-
-开始前确认：
-
-- 第 1 步策划三文档已批准（或已记录跳过）
-- 已创建 `specs/<project-id>/`
-- 已明确游戏类型、平台、比例和首个页面
-- 有参考图时使用 `@图片路径` 引用
-- `style-contract.yaml` 可以处于 `draft`
-
-调用：
-
-```text
-使用 game-ui-workflow，当前执行第 2 步“原型生成视觉”。
-项目目录是 @specs/moon-palace-rpg。
-
-先确认 gdd.md / prd.md / interaction.md 已批准。
-再读取 spec.md、research.md 和 contracts。
-为 screen-id=home 生成一张基准原型视觉：
-1. 补全最小可用的视觉约束；
-2. 输出页面定位、布局、组件清单、正向提示词和反向限制；
-3. 实际调用图片生成工具；
-4. 保存提示词到 prompts/pages/home.md；
-5. 保存图片到 assets/pages/home-v1.png；
-6. 更新 screen-contract.yaml 和 asset-manifest.yaml；
-7. 保持 approved=false，等待我验收。
-
-完成后请按“本步产物、检查重点、可选调整、下一步调用文本”给出操作指引。
-```
-
-本步产物：
-
-- `prompts/pages/home.md`
-- `assets/pages/home-v1.*`，或图片工具不可用时的 `pending-generation`
-- `screen-contract.yaml` 中的首页定义
-- `asset-manifest.yaml` 中未批准的页面条目
-
-用户检查：
-
-- 主操作能否在三秒内识别
-- 主视觉是否符合游戏题材
-- 顶部资源、中部内容和底部导航是否层级清楚
-- 比例、安全区、文字策略是否合理
-- 是否存在乱码、商标、按钮变形或元素粘连
-
-如果构图不满意：
-
-```text
-保持当前 UI 风格不变，只修正 home-v1 的构图：
-【写明问题，例如主按钮不突出、入口太多、角色遮挡】。
-生成 home-v2，保留 v1，不要开始风格切换或页面延展。
-```
-
-进入下一步的条件：原型构图和功能层级基本成立；页面仍可保持未批准状态。
-
-### 第三步：UI 风格切换
-
-目标：在相同页面结构下比较不同视觉方向，选定后冻结为全项目风格。
-
-不要直接覆盖原型。每个风格方案生成独立版本，并在 manifest 保留来源关系。
-
-调用：
-
-```text
-使用 game-ui-workflow，当前执行第 3 步“UI 风格切换”。
-读取 @specs/moon-palace-rpg 和现有 home-v1。
-
-保持首页的信息结构、主操作和组件位置不变，
-将视觉从【当前风格】切换为【目标风格】：
-- 目标关键词：【例如青白玉石、冷月银、轻盈半透明】
-- 保留内容：【例如月轮构图、六项底部导航】
-- 禁止内容：【例如暖金主色、厚重金属、复杂纹理】
-
-先更新 research.md 中的风格决策，生成候选 style-contract；
-再生成 home-v2 作为风格对比稿，不覆盖 home-v1。
-完成后列出两个版本在色彩、材质、光源、圆角、图标和可读性上的差异，
-等待我选择，不要开始 UI 延展。
-```
-
-用户选择风格：
-
-```text
-确认采用 home-v2 的视觉方向。
-将对应 style-contract.yaml 设为 approved，
-将 home-v2 标记为 approved，home-v1 保留为历史方案；
-同步更新 research.md、screen-contract.yaml 和 asset-manifest.yaml。
-完成后给出第 4 步“UI 延展”的建议页面列表和调用文本。
-```
-
-本步检查：
-
-- 风格切换只改变视觉语言，不破坏原型的信息架构
-- 色值、材质、光向、圆角、描边和图标视角均进入契约
-- 只有被选中的风格和基准页标记为 `approved`
-- 未采用版本保留，不伪装成最终资源
-
-进入下一步的条件：`style-contract.yaml` 已批准，至少一个基准页面已批准。
-
-### 第四步：UI 延展
-
-目标：以批准的风格和基准页扩展页面系统，再逐页生成视觉。
-
-先做屏幕地图，不要立即批量生图：
-
-```text
-使用 game-ui-workflow，当前执行第 4 步“UI 延展”。
-读取 @specs/moon-palace-rpg、已批准的 style-contract 和 home 基准页。
-
-先调用 game-ui-extension：
-1. 根据玩家旅程找出首发版本必需页面；
-2. 标记 must-have、genre-specific 和 optional；
-3. 为每页定义目的、入口、主操作、依赖、组件、状态和边界场景；
-4. 更新 plan.md、screen-contract.yaml 和 tasks.md；
-5. 按依赖关系给出页面生成批次。
-
-本轮不要生成图片。完成后等待我确认页面范围，
-并给出“建议先生成哪一页、原因、下一步调用文本”。
-```
-
-确认页面范围后，逐页生成：
-
-```text
-页面范围确认。现在只生成 screen-id=formation。
-使用 game-ui-page-generator，严格继承已批准的 style-contract 和 home 基准页。
-保存 formation-v1、提示词和 manifest 条目，approved=false。
-完成后停止，给出本页检查重点和下一页建议。
-```
-
-每完成一页，用户需要：
-
-1. 查看视觉稿。
-2. 要求修订或明确批准。
-3. 批准后再生成下一页。
-4. 不满意时生成 `v2`，不要覆盖 `v1`。
-
-本步检查：
-
-- 新页面延续色彩、材质、光向、圆角和导航规则
-- 功能重点随页面变化，但不另起视觉系统
-- 页面之间入口、返回路径和状态闭合
-- 每次只生成一个页面，资源均登记到 manifest
-
-进入下一步的条件：需要拆解的源页面已标记 `approved: true`。
-
-### 第五步：UI 组件拆解
-
-目标：把批准页面拆成可复用、可合成、可开发交付的独立素材。
-
-先确认拆解范围：
-
-- 页面专属：背景、角色底座、主题装饰
-- 跨页复用：按钮、卡片、导航、货币栏、图标
-- 需要的状态：默认、按下、选中、禁用、锁定、已领取
-
-调用：
-
-```text
-使用 game-ui-workflow，当前执行第 5 步“UI 组件拆解”。
-源页面为已批准的 screen-id=home。
-
-调用 game-ui-component-breakdown，拆解：
-1. 无 UI 控件和角色的首页背景；
-2. 无文字主按钮的默认、按下、禁用状态；
-3. 六个底部导航图标；
-4. 金币、月玉、体力图标；
-5. 页面主题装饰。
-
-要求：
-- 除背景外全部透明背景；
-- 使用“雪碧图模式”生成组件合图，所有元素完整、互不接触并留有间距；
-- 雪碧图只作为待切割中间产物，不作为最终组件交付；
-- 每个组件仍需单独保存提示词和契约；
-- 文件名包含 component-id、state 和版本；
-- 更新 component-contract.yaml 和 asset-manifest.yaml。
-
-完成后按“雪碧图路径、组件数量、元素间距、背景类型、下一步拆分参数”给出指引，
-不要提前声称已经得到独立 PNG。
-```
-
-本步检查：
-
-- 源页面已批准
-- 非背景组件存在透明通道
-- 无文字、乱码、脏边、裁切和背景残留
-- 同组图标的透视、描边和光源一致
-- 主按钮与次按钮视觉权重正确
-- 每个元素完整且互不粘连
-
-进入下一步的条件：组件雪碧图已经生成并登记，背景透明或颜色基本统一。
-
-### 第六步：雪碧图拆分与 PNG 打包
-
-目标：把组件合图自动切成单元素透明 PNG，生成坐标清单并打包 ZIP。
-
-调用：
-
-```text
-使用 game-ui-workflow，当前执行第 6 步“雪碧图拆分与 PNG 打包”。
-输入雪碧图是 @specs/moon-palace-rpg/assets/sprites/home-components.png。
-
-调用 game-ui-sprite-sheet-splitter：
-1. 去掉标题、按钮文案、数字标签、水印和文字残影；
-2. 自动判断透明背景或纯色背景；
-3. 检测互不接触的独立元素；
-4. 导出单元素透明 PNG 到 assets/sprites/home-components/items；
-5. 生成 sprite-manifest.yaml，记录坐标、尺寸和文件名；
-6. 打包为 packages/home-components-png.zip；
-7. 更新 sprite-contract.yaml 和 asset-manifest.yaml；
-8. 检查文字、裁断、粘连、阴影、透明边缘和 ZIP 完整性。
-
-完成后列出成功切片、疑似误切、需人工检查和下载包路径。
-```
-
-对应命令：
+确认后由 Agent 的**实际可用图像工具**调用生成/编辑，不是由状态脚本生成图像。模型未知则如实写 `unknown`。保存真实输出：
 
 ```bash
-python3 scripts/split_sprite_sheet.py \
-  specs/moon-palace-rpg/assets/sprites/home-components.png \
-  --output-dir specs/moon-palace-rpg/assets/sprites/home-components/items \
-  --zip specs/moon-palace-rpg/packages/home-components-png.zip \
-  --mode auto \
-  --prefix home-component
+python3 scripts/workflow_state.py /Projects/MyGame/art-workflow record concept-v001 --kind concept \
+  --parent direction-v001 --file /path/to/actual-concept.png --prompt /path/to/actual-prompt.md \
+  --tool '<真实工具名>' --model '<实际模型或unknown>'
 ```
 
-误切调整：
+无工具时省略 `--file`，得到 `pending-generation`。已生成但无法传到本地时加 `--result-ref '<真实工具结果引用>'`，得到 `pending-transfer`。传入后使用新 ID，`--based-on concept-v001` 关联任务，不重跑成功生成。两个状态都不能批准为已完成。
 
-- 元素被拆碎：提高 `--connect-gap`
-- 多个元素粘连：降低 `--connect-gap`
-- 背景残留：调整 `--background-tolerance`
-- 小图标消失：降低 `--min-area`
-- 发光被裁断：提高 `--padding`
+展示概念图后再次等待反馈；确认概念图不会批准正式页面。视觉方向修改后保留旧版本，用新 ID 登记。
 
-本步检查：
-
-- 每张 PNG 只包含一个完整元素
-- 每张 PNG 不含标题、按钮文案、数字标签、水印或文字残影
-- PNG 具有真实透明通道
-- 原图坐标、实际尺寸和 manifest 一致
-- 阴影与发光没有被裁断
-- ZIP 可解压并包含所有 PNG 和 manifest
-- 原始雪碧图、拆分目录和压缩包均可追踪
-
-### 第七步：9-slice、Atlas 与引擎交付
-
-目标：把语义 PNG 转成开发可读取的 Atlas 和引擎 JSON。
+## 路径二：已有概念图 → 单页面 → 组件
 
 ```text
-使用 game-ui-asset-pipeline。
-先确认 sprite-contract.yaml 中每个 item 已关联 component_id、state、
-semantic_name 和 slice，9-slice margins 已人工预览。
-
-生成不旋转的 Atlas PNG 与 JSON，
-再为 Godot、Unity 和 Cocos 生成 JSON handoff。
-不要声称已经生成原生引擎工程文件。
+使用 $game-ui-page-generator，已有概念图 /Projects/MyGame/Refs/main-v2.png 已被我选定。
+只设计商店页，沿用角色、材质和配色；完成后等待确认。
 ```
 
-对应命令：
+Agent 实际看图并读取玩法资料，建立目标页最小 brief 和必要的 style/screen contracts。局部精修先锁定不可变布局和本次允许修改模块。没有 GDD/PRD/interaction 模板也可以执行。
+
+初始化完整 UI 契约骨架可用：
 
 ```bash
-python3 scripts/build_sprite_atlas.py specs/<project-id> --force
-python3 scripts/export_engine_manifest.py specs/<project-id> --force
+python3 scripts/init_project.py my-game --visual --source /Projects/MyGame/Docs/GDD.md \
+  --workspace /Projects/MyGame/ArtWorkspaces
 ```
 
-本步检查：
+不会复制/生成三份规划文档。模板是草稿，Agent 按当前页面补实内容后才进入生产验收；`--force` 会刷新模板，不用于日常恢复。
 
-- 最终文件不是 `element-001.png`，而是稳定语义名称
-- 9-slice 左右与上下 margins 保留可拉伸中心
-- Atlas 无旋转、重叠、裁断或透明污染
-- regions、pivot、state 与源 PNG 一致
-- 各引擎 JSON 引用同一 Atlas
-- JSON handoff 与原生引擎导入能力明确区分
+全链路页面记录 approved concept 作为 `--parent`；用户明确只做单页时记录 `--direct-reason '<用户授权的本次单页范围>'`。输出始终先为 review。页面得到确认后再拆组件。
 
-最终验收：
+面板从生产阶段规划背景/边框/装饰/文字分开。复杂素材单独生成；小素材可规则合图。透明素材原生生成/编辑后运行真实 Alpha 检查，主体完整性和风格仍需看图。单独道具任务不要求虚构源页面，使用真实独立范围记录。
 
-```text
-使用 game-ui-workflow 验收整个项目。
-运行 validate_project.py --strict，
-检查页面 ID、组件 ID、雪碧图切片、ZIP、9-slice、Atlas、引擎 JSON、资源路径、真实尺寸、透明背景和版本来源。
-修复全部错误；不能修复的限制写入 quickstart.md。
-```
+## 路径三：已有合图 → 确定性切分 → Unity
 
-### 每一步完成后的固定汇报格式
-
-要求总控技能在每一步结束时使用：
-
-```text
-当前步骤：
-完成状态：
-本步产物：
-需要你检查：
-可选操作：
-进入下一步的条件：
-可直接复制的下一步调用文本：
-```
-
-这样用户无需记忆流程，也不会在页面未批准时误入组件拆解，或在雪碧图不存在时伪造切片包。
-
-## 6. 端到端调用
-
-以下提示会依次执行规范、页面延展、单页视觉、组件拆解、雪碧图拆分、Atlas 交付和校验：
-
-```text
-使用 game-ui-workflow，为 moon-palace-rpg 完成一轮端到端 UI 设计。
-
-要求：
-1. 读取 specs/moon-palace-rpg 下的现有文档和 contracts。
-2. 完成 UI 规范并冻结 style-contract.yaml。
-3. 根据玩家旅程延展首页、编队、关卡、战斗 HUD、结算、角色和背包。
-4. 先生成首页，实际调用图片生成工具并保存视觉稿。
-5. 首页通过验收后，生成包含背景、主按钮、底部导航和货币栏的组件雪碧图。
-6. 把雪碧图切成单元素透明 PNG，并打包为 ZIP。
-7. 语义命名并确认 9-slice，生成 Atlas 和引擎 JSON。
-8. 所有提示词、图片、切片、Atlas 和压缩包必须登记到对应契约。
-9. 最后运行 validate_project.py，修复全部错误。
-```
-
-如果希望在关键阶段人工确认：
-
-```text
-使用 game-ui-workflow 分阶段执行。每完成一个阶段先停止并汇报变更：
-第一阶段只完成 spec、research 和 style-contract；
-我确认后再执行页面延展；
-首页视觉必须经我明确批准后才能拆组件；
-组件雪碧图生成后先让我检查，再执行自动切片和打包。
-```
-
-## 7. 单独调用子技能
-
-### 7.1 生成 UI 规范
-
-```text
-使用 game-ui-specification，读取 @specs/moon-palace-rpg/spec.md
-和 @specs/moon-palace-rpg/research.md。
-
-为手机竖屏国风卡牌 RPG 建立可执行 UI 规范：
-- 明确色值、字体层级、安全区、圆角、描边和按钮尺寸；
-- 定义默认、按下、选中、禁用、加载和已领取状态；
-- 写入 contracts/style-contract.yaml；
-- 完成后将 status 设为 approved。
-```
-
-主要输出：
-
-- `contracts/style-contract.yaml`
-- `research.md` 中的设计决策
-- `tasks.md` 中的规范任务状态
-
-### 7.2 延展页面系统
-
-```text
-使用 game-ui-extension，读取 @specs/moon-palace-rpg。
-基于首页和核心循环扩展首发版本页面，不要无差别加入所有常见系统。
-
-请为每个页面定义目的、入口、1–3 个主操作、依赖、组件、
-默认/空/锁定/错误状态、边界场景和数据需求。
-更新 plan.md、screen-contract.yaml 和 tasks.md。
-```
-
-主要输出：
-
-- `plan.md` 中的页面路线与生成批次
-- `contracts/screen-contract.yaml`
-- 按优先级拆分的后续任务
-
-### 7.3 生成一个页面
-
-```text
-使用 game-ui-page-generator，读取 @specs/moon-palace-rpg。
-只生成 screen-id 为 home 的首页。
-
-要求：
-- 严格继承 style-contract.yaml；
-- 输出具体布局、组件清单、正向提示词和反向限制；
-- 实际调用图片生成工具；
-- 保存到 assets/pages/home-v1.png；
-- 提示词保存到 prompts/pages/home.md；
-- 更新 screen-contract.yaml 和 asset-manifest.yaml；
-- 未经我确认不要把 approved 设为 true。
-```
-
-页面技能一次只处理一个 `screen-id`。继续生成其他页面时，应明确继承已批准基准页：
-
-```text
-使用 game-ui-page-generator 继续生成 formation 页面。
-继承已批准的 home 页面以及全部视觉契约，只改变页面功能重点。
-```
-
-### 7.4 批准页面
-
-确认视觉稿符合要求后调用：
-
-```text
-检查 @specs/moon-palace-rpg/assets/pages/home-v1.png。
-如果它满足比例、安全区、主操作、视觉契约和文字策略，
-将对应 manifest 条目改为 approved，并同步 screen-contract.yaml；
-如果不满足，列出问题并生成 v2，不要覆盖 v1。
-```
-
-只有页面 manifest 条目为 `approved: true`，组件技能才会继续。
-
-### 7.5 拆解组件
-
-```text
-使用 game-ui-component-breakdown，读取已批准的 home 页面和全部 contracts。
-
-拆解：
-- 无 UI 控件的首页背景；
-- 无文字主按钮的默认、按下、禁用状态；
-- 六个底部导航图标；
-- 金币、月玉和体力图标。
-
-除背景外全部要求透明背景。默认每个组件单独生成；
-如果后续需要自动切图，则使用雪碧图模式，保证元素完整、互不接触并留有间距。
-```
-
-主要输出：
-
-- `contracts/component-contract.yaml`
-- `prompts/components/<component-id>.md`
-- `assets/components/`
-- `contracts/asset-manifest.yaml`
-
-### 7.6 拆分雪碧图并打包
-
-```text
-使用 game-ui-sprite-sheet-splitter，
-读取 @specs/moon-palace-rpg/assets/sprites/home-components.png。
-
-自动识别背景并把每个元素导出为透明 PNG，
-保存坐标和尺寸 manifest，打包为 home-components-png.zip。
-先去掉所有文字，再检查裁断、粘连、阴影、透明边缘和 ZIP 完整性，
-更新 sprite-contract.yaml 和 asset-manifest.yaml。
-```
-
-主要输出：
-
-- `assets/sprites/<pack-id>/items/*.png`
-- `assets/sprites/<pack-id>/items/sprite-manifest.yaml`
-- `packages/<pack-id>-png.zip`
-- `contracts/sprite-contract.yaml`
-
-### 7.7 打包 Atlas 与引擎 JSON
-
-```text
-使用 game-ui-asset-pipeline，
-读取已批准的 sprite-contract、atlas-contract 和 export-contract。
-确认语义命名与 9-slice margins 后生成 Atlas，
-并导出 Godot、Unity、Cocos JSON handoff。
-```
-
-主要输出：
-
-- `assets/atlases/<atlas-id>.png`
-- `assets/atlases/<atlas-id>.json`
-- `exports/<engine>/<atlas-id>.json`
-- `contracts/atlas-contract.yaml`
-- `contracts/export-contract.yaml`
-
-## 8. 修改已有项目
-
-### 修改整体风格
-
-```text
-使用 game-ui-specification，把整体视觉从深蓝鎏金调整为青白玉石。
-先更新 spec.md 和 style-contract.yaml，
-再将受影响的已生成页面和组件标记为 stale。
-不要直接覆盖已批准资源。
-```
-
-### 增加新页面
-
-```text
-使用 game-ui-extension，为当前项目增加公会系统。
-先补充公会大厅、成员、活动和管理页面契约，
-说明它们与首页、聊天和活动中心的入口关系，不要立即生图。
-```
-
-### 重新生成页面版本
-
-```text
-使用 game-ui-page-generator，修正 home-v1 中主按钮不突出的问题。
-保持其他契约不变，生成 home-v2，并在 manifest 中保留 v1 的来源关系。
-```
-
-## 9. 校验交付物
-
-普通校验：
+先检查原图实际像素：
 
 ```bash
-python3 scripts/validate_project.py specs/moon-palace-rpg
+python3 scripts/inspect_image.py /path/to/sheet.png --require-transparent --report /path/to/alpha-report-v001.json
 ```
 
-严格校验：
+报告包含真实尺寸、Alpha 是否存在、透明/不透明/半透明像素、可见边界和边缘触碰。全不透明 RGBA 和全透明空图不能通过透明素材要求。检查不能识别所有脏边、棋盘格绘图、色边或主体缺失；联系表和原图需人工查看。
+
+网格布局（参数按真实图片调整）：
+
+```yaml
+mode: grid
+columns: 2
+rows: 2
+margin: 8
+spacing: 8
+names: [gold-icon, gem-icon, energy-icon, key-icon]
+require_transparent: true
+```
+
+区域裁剪：
+
+```yaml
+mode: regions
+require_transparent: true
+items:
+  - name: primary-button-default
+    rect: [20, 30, 200, 80]  # 左上角x/y、宽、高，单位像素
+    component_id: primary-button
+    category: control
+    state: default
+    slice: {type: 9-slice, margins: [12, 14, 10, 8]} # 左、右、上、下；须人工确认
+```
+
+Alpha 边界裁剪：
+
+```yaml
+mode: trim
+name: potion-red
+padding: 4
+alpha_threshold: 0
+require_transparent: true
+```
+
+默认阈值保留所有非零 Alpha。抬高阈值可能舍弃微弱发光边缘，需要人工确认。清单保留原始尺寸和偏移；裁剪不自动计算角色动画/物理锚点。
 
 ```bash
-python3 scripts/validate_project.py specs/moon-palace-rpg --strict
+python3 scripts/process_sprites.py split /path/to/sheet.png --layout /path/to/layout.yaml --output /path/to/pack-v001
+python3 scripts/process_sprites.py verify /path/to/pack-v001
 ```
 
-也可以让总控技能执行：
+输出：语义 PNG、`sprite-manifest.yaml`、`contact-sheet.png`、`sprites.zip`。ZIP 的 PNG 在 `items/` 下，联系表不属于生产 Sprite。目录必须是新版本；无效区域、非整除网格、重复/不安全命名、空素材会失败，不产生半成品交付目录。
 
-```text
-使用 game-ui-workflow 验收 @specs/moon-palace-rpg。
-运行严格校验，修复合同 ID、资源路径、尺寸、透明背景和 manifest 引用错误。
-不要跳过警告；无法修复的限制写入 quickstart.md。
+布局不规则且对象分离清楚时可以沿用 `split_sprite_sheet.py` 的 Alpha/纯色背景连通检测。复杂背景用实际图像编辑能力、重新独立生成或明确区域处理；不能保证无损分离。
+
+检查每件素材、半透明边缘和 9-slice 后，由用户确认该批版本，再运行：
+
+```bash
+python3 scripts/export_asset_pack.py /path/to/pack-v001 --output /path/to/delivery-v001 \
+  --review-evidence '<真实用户确认该批素材版本的依据>' --ppu 100 --max-size 2048
 ```
 
-## 10. 图片工具不可用时
+交付包含独立 PNG、Atlas、三个引擎及 generic JSON、SpriteAtlas 配置建议、来源哈希、ZIP 和 `UNITY-IMPORT.md`。`--review-evidence` 是审计记录，不会认证说话者，也不能由 Agent 自签替代确认。
 
-技能必须安全降级：
+Unity 可选择独立 PNG Single 导入后由 Unity 建 SpriteAtlas，或已打包 PNG Multiple 并按 JSON rect 切分。不要将配置 JSON 重命名为 `.spriteatlas`。文字交给 TMP，9-slice 在 UGUI 的 Sliced 模式下检查。
 
-- 保存完整正向提示词和反向限制
-- 不创建虚假图片
-- manifest 使用 `status: pending-generation`
-- 设置 `approved: false`
-- 图片工具恢复后根据提示词继续生成
+## 既有契约与引擎导出
 
-调用示例：
+原有页面项目继续维护 style、screen、component、sprite、atlas、export contracts 和 asset-manifest。
 
-```text
-使用 game-ui-page-generator 生成 home 页面。
-如果当前无法调用图片工具，只保存可直接执行的提示词，
-并在 manifest 标记 pending-generation，不要伪造图片路径。
+```bash
+python3 scripts/build_sprite_atlas.py /path/to/project
+python3 scripts/export_engine_manifest.py /path/to/project
+python3 scripts/validate_project.py /path/to/project --strict
 ```
 
-## 11. 推荐调用顺序
+先设置新的输出版本路径。Unity rect 已修正为左下角，border 为 `[left,bottom,right,top]`；内部 slice margins 仍为 `[left,right,top,bottom]`。历史 Unity JSON 应重新生成，Godot/Cocos 语义不变。
 
-新项目：
+直接资产包用 `process_sprites verify` 和交付 ZIP 验证即可，不要求建立不相关的页面契约。探索期工作区可只含 workflow-state；只有进入完整 UI 契约阶段才要求对应文档齐全。
 
-```text
-game-ui-workflow（从第 1 步开始）
-→ game-ui-product-design          # 第 1 步：GDD / PRD / 交互（批准后再继续）
-→ game-ui-specification
-→ game-ui-extension
-→ game-ui-page-generator
-→ 页面批准
-→ game-ui-component-breakdown
-→ game-ui-sprite-sheet-splitter
-→ game-ui-asset-pipeline（需要开发交付时）
-→ validate_project.py
+## 恢复与限制
+
+```bash
+python3 scripts/workflow_state.py /path/to/project resume
 ```
 
-已有规范、只做单页：
-
-```text
-确认第 1 步策划三文档已批准
-→ game-ui-page-generator
-→ 页面批准
-→ game-ui-component-breakdown（可选）
-→ game-ui-sprite-sheet-splitter（组件合图时可选）
-→ game-ui-asset-pipeline（需要 Atlas 时可选）
-```
-
-只有参考图、需要扩展整套页面：
-
-```text
-game-ui-workflow
-→ game-ui-product-design          # 仍为第 1 步
-→ 参考图研究
-→ game-ui-specification
-→ game-ui-extension
-```
-
-## 12. 常见问题
-
-### 技能没有自动触发
-
-在请求第一句明确写：
-
-```text
-使用 game-ui-workflow。
-```
-
-并确认技能已安装到当前项目 `.cursor/skills/` 或个人 `~/.cursor/skills/`。
-
-### 连续页面风格不一致
-
-要求页面技能读取已批准页面、`style-contract.yaml` 和 `asset-manifest.yaml`，不要只引用聊天中的风格描述。
-
-### 组件仍带背景或文字
-
-明确指定“除背景外透明背景、不要文字、每个组件单独生成”，并检查 `component-contract.yaml` 中的 `transparent_background` 和 `text_policy`。
-
-### 页面还没确认就开始拆组件
-
-先批准页面并更新 manifest。组件拆解技能应在 `approved: true` 之前停止。
-
-### 图片比例与契约不一致
-
-在 manifest 记录工具返回的真实尺寸，不要伪造目标尺寸；随后重新生成或裁切为契约比例。
-
-### 雪碧图被拆成太多碎片
-
-提高 `--connect-gap`，让同一元素中距离较近的阴影、发光和装饰合并；仍然碎裂时应重新生成结构更连贯的雪碧图。
-
-### 多个元素被切在同一个 PNG
-
-降低 `--connect-gap`。如果元素原本已经接触或遮挡，自动算法无法恢复边界，应重新生成元素互不接触的组件雪碧图。
-
-### 透明 PNG 有白边或背景残留
-
-使用 `--mode background` 并调整 `--background-tolerance`。背景本身复杂或渐变时，优先重新生成纯色或透明背景雪碧图。
+读取待生成/待传入/待确认和历史批准；修改输出、提示词、来源或批准父版本会被识别。来源变化先重新读取并登记，新设计用新版本；历史批准不自动转移。
+状态文件只支持单写入者，不是并发数据库。来源绝对路径迁移后需重新定位并登记。GDD 格式解析和语义提炼由 Agent 及可用读取工具完成，哈希登记不表示已阅读。工作流脚本不调用模型 API。

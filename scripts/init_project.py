@@ -17,6 +17,9 @@ def parse_args() -> argparse.Namespace:
         description="Create specs/<project-id> from repository templates."
     )
     parser.add_argument("project_id", help="Lowercase letters, numbers, and hyphens.")
+    parser.add_argument('--workspace', type=Path, help='Output collection directory; templates stay in the installed runtime.')
+    parser.add_argument('--visual', action='store_true', help='Initialize visual workflow without creating GDD/PRD/interaction.')
+    parser.add_argument('--source', type=Path, action='append', default=[], help='Existing authoritative source; repeatable; implies --visual.')
     parser.add_argument(
         "--root",
         type=Path,
@@ -45,7 +48,8 @@ def copy_template(source: Path, target: Path, project_id: str, force: bool) -> b
 
 
 def initialize(
-    root: Path, base_dir: str, project_id: str, force: bool
+    root: Path, base_dir: str, project_id: str, force: bool,
+    visual: bool = False, sources=(), workspace: Path | None = None,
 ) -> tuple[Path, list[Path]]:
     if not PROJECT_ID_PATTERN.fullmatch(project_id):
         raise ValueError(
@@ -60,7 +64,10 @@ def initialize(
     base_path = Path(base_dir)
     if base_path.is_absolute() or ".." in base_path.parts:
         raise ValueError("base_dir must be a safe path relative to the repository root")
-    project_dir = root / base_path / project_id
+    project_dir = (workspace.resolve() if workspace else root / base_path) / project_id
+    if visual or sources:
+        from workflow_state import initialize as initialize_state
+        initialize_state(project_dir, sources)
     for relative in (
         "assets/pages",
         "assets/components",
@@ -77,6 +84,8 @@ def initialize(
 
     written: list[Path] = []
     for source in sorted(spec_templates.glob("*.md")):
+        if (visual or sources) and source.name in ('gdd.md', 'prd.md', 'interaction.md'):
+            continue
         target = project_dir / source.name
         if copy_template(source, target, project_id, force):
             written.append(target)
@@ -109,7 +118,8 @@ def main() -> int:
     root = (args.root or Path(__file__).resolve().parents[1]).resolve()
     try:
         project_dir, written = initialize(
-            root, args.base_dir, args.project_id, args.force
+            root, args.base_dir, args.project_id, args.force,
+            args.visual, args.source, args.workspace,
         )
     except (ValueError, FileNotFoundError) as error:
         print(f"ERROR: {error}")
