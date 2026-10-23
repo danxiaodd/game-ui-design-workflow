@@ -9,7 +9,7 @@ description: Creates and maintains production-oriented game UI specifications an
 
 ## 输入
 
-优先读取：
+优先读取用户提供的策划、`source-brief.md`、已确认方向及概念图；完整流程先检查确认依据，指定单页任务只建立必要局部规范。其次读取：
 
 - `spec.md`：玩法、平台、比例、范围和验收标准
 - `research.md`：参考图抽象与版权约束
@@ -69,7 +69,7 @@ description: Creates and maintains production-oriented game UI specifications an
 - 同一组件状态只能有一套定义。
 - 所有页面共享光向、材质词汇、圆角等级和图标视角。
 - 若修改已批准契约，将依赖资源标记为 `stale`，不要静默覆盖。
-- 完成评审后把 `status` 设为 `approved`。
+- 提出规范后等待用户确认，或引用明确覆盖该规范的既有用户决定，再把 `status` 设为 `approved`，记录依据。
 
 ## 输出
 
@@ -85,3 +85,13 @@ description: Creates and maintains production-oriented game UI specifications an
 - 主操作对比强于次操作
 - 文字和数字在复杂背景上可读
 - 页面和组件提示词可以直接引用契约字段
+
+## 可移植脚本调用（Codex / Cursor）
+
+以下 `<SKILL_DIR>` 取本次实际加载的 SKILL.md 所在绝对目录。
+
+```bash
+python3 <SKILL_DIR>/scripts/run.py <tool_name> <arguments>
+```
+
+本文所有 `python3 scripts/<tool_name>.py ...` / `<tool_name> ...` 命令均可用以上方式执行；工具名不带 `.py`。入口自动定位仓库或安装时一起部署的 runtime，不要求当前目录恰好是本仓库。模板/配置在 runtime 内，工作产物使用用户项目的绝对路径；`init_project` 用 `--workspace` 指定输出集合。优先恢复状态，生成与批准分别登记；无需 Figma。

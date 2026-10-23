@@ -7,6 +7,8 @@ import argparse
 import re
 import shutil
 import statistics
+import tempfile
+import hashlib
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -182,7 +184,7 @@ def prepare_output(directory: Path, force: bool) -> None:
     directory.mkdir(parents=True, exist_ok=True)
 
 
-def split_sprite_sheet(
+def _split_sprite_sheet(
     source: Path,
     output_dir: Path,
     zip_path: Path,
@@ -246,7 +248,7 @@ def split_sprite_sheet(
                 crop_box[3] - crop_box[1],
             ],
             "dimensions": [crop.width, crop.height],
-            "transparent_background": True,
+            "transparent_background": crop.getchannel("A").getextrema()[0] == 0 and crop.getchannel("A").getbbox() is not None,
         }
         for key in ("semantic_name", "component_id", "category", "state", "slice"):
             if key in semantic:
@@ -259,6 +261,7 @@ def split_sprite_sheet(
     manifest: dict[str, Any] = {
         "schema_version": 1,
         "source_sheet": source.name,
+        "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "detected_mode": detected_mode,
         "sampled_background": list(background) if background else None,
         "settings": {
@@ -284,6 +287,32 @@ def split_sprite_sheet(
             archive.write(path, f"items/{path.name}")
     manifest["package"] = str(zip_path)
     return manifest
+
+
+def split_sprite_sheet(source, output_dir, zip_path, settings, force=False, semantic_items=None):
+    """Stage output before touching existing files, including on invalid mappings."""
+    source, output_dir, zip_path = Path(source).resolve(), Path(output_dir).resolve(), Path(zip_path).resolve()
+    if not ID_PATTERN.fullmatch(settings.prefix):
+        raise ValueError('prefix must use kebab-case')
+    if output_dir == source or output_dir in source.parents or zip_path == source or output_dir in zip_path.parents:
+        raise ValueError('source, output directory and ZIP must not overlap')
+    if output_dir.exists() and any(output_dir.iterdir()) and not force:
+        raise FileExistsError('output directory is not empty; use a new version')
+    if zip_path.exists() and not force:
+        raise FileExistsError('package already exists; use a new version')
+    if not source.is_file():
+        raise FileNotFoundError(source)
+    with tempfile.TemporaryDirectory(prefix='game-ui-split-') as temp:
+        staged = Path(temp)/'items'
+        staged_zip = Path(temp)/'pack.zip'
+        result = _split_sprite_sheet(source, staged, staged_zip, settings, False, semantic_items)
+        output_dir.parent.mkdir(parents=True,exist_ok=True)
+        zip_path.parent.mkdir(parents=True,exist_ok=True)
+        if output_dir.exists(): shutil.rmtree(output_dir)
+        shutil.copytree(staged,output_dir)
+        shutil.copy2(staged_zip,zip_path)
+        result['package'] = str(zip_path)
+        return result
 
 
 def parse_args() -> argparse.Namespace:

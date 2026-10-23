@@ -1,0 +1,8 @@
+# Example only: choose parameters from the actual source layout.
+mode: grid
+columns: 2
+rows: 2
+margin: 8
+spacing: 8
+names: [gold-icon, gem-icon, energy-icon, key-icon]
+require_transparent: true

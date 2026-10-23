@@ -7,17 +7,21 @@ description: Breaks an approved game UI page or visual style into reusable, indi
 
 输出独立素材或待自动切割的组件雪碧图及其契约，不重新生成完整页面。
 
+独立调用时先恢复项目状态；没有 `workflow-state.json` 就运行 `workflow_state <project> init`，不要求 GDD。实际看过的既有概念图/源图可用 `source <path> --role visual-reference --evidence '<查看与用途>'` 登记。按本次入口登记产物，不依赖先运行总控。
+
 ## 前置门禁
 
-必须读取：
+页面拆解任务读取以下已有文件（缺少时按当前范围补最小条目，不创建无关系统）：
 
 - `contracts/style-contract.yaml`
 - `contracts/screen-contract.yaml`
 - `contracts/component-contract.yaml`
 - `contracts/asset-manifest.yaml`
-- 已批准页面视觉稿
+- 已批准页面视觉稿（独立素材任务不适用）
 
-源页面对应 manifest 条目必须为 `approved: true`。若未批准，停止拆解并说明需要先完成页面验收。
+页面拆解任务要求源页面对应 manifest 条目为 `approved: true` 并有用户确认依据。若未批准，先停在页面验收。用户只生产独立道具、角色、图标或已有素材批次时，可直接执行；记录用户指定的独立范围与来源，不强制虚构源页面。
+
+独立角色、道具或素材批次任务只读取实际提供的风格/源图/目标尺寸和用途；不要求创建页面契约或虚构已批准页面。
 
 ## 分类
 
@@ -34,7 +38,7 @@ description: Breaks an approved game UI page or visual style into reusable, indi
 2. 建立组件 ID、分类、用途、复用性、尺寸、状态和源页面关系。
 3. 区分页面专属组件与跨页面基础组件。
 4. 为每个组件写一份可独立执行的提示文件。
-5. 图片工具可用时逐个生成，不把多个组件排成素材板。
+5. 复杂角色、关键道具和独立装饰逐个生成；重复小图标/装饰可选规则合图，明确网格、顺序、间距与留白。原生透明输出优先，工具不可用只保存待生成提示词。
 6. 检查边缘、透明通道、裁切、光向和比例。
 7. 更新组件契约和资源清单。
 
@@ -51,6 +55,14 @@ description: Breaks an approved game UI page or visual style into reusable, indi
 雪碧图不是最终切图。生成后必须调用 `game-ui-sprite-sheet-splitter` 导出独立 PNG，并完成人工验收。
 
 最终文件名遵循[组件语义命名规范](references/naming-conventions.md)。`element-001.png` 只允许作为检测中间结果，不能作为批准交付。
+
+## 工具、分层与真实检查
+
+先核实当前生图/编辑与文件工具，沿用总控的环境边界。透明生成/背景移除/局部编辑的能力及限制见相邻 `game-concept-image/references/image-capabilities.md`。
+面板的背景、边框、装饰和文字从制作阶段规划分开；不承诺从合成图无损恢复图层。已有图背景移除保留原版并实际检查细节，不能仅凭预览判透明。
+执行 `inspect_image <actual.png> --require-transparent`，检查实际透明像素、空图、可见边界与尺寸；边缘残色、半透明阴影、主体缺失与视觉一致性需人工看图。
+复杂背景/粘连对象可重新独立生成、请求区域标注或按授权编辑；纯色抠图仅作有条件的后处理。
+状态登记 `component`，页面路径用已批准 page 父版本；独立任务用真实 `--direct-reason`。素材仍须用户验收后交付。
 
 ## 默认规则
 
@@ -106,7 +118,7 @@ description: Breaks an approved game UI page or visual style into reusable, indi
 
 ## 验收
 
-- 文件路径、组件 ID 和源页面可追踪
+- 文件路径、稳定资产 ID 和来源可追踪；页面任务还需关联组件 ID 与源页面
 - 非背景组件透明要求正确
 - 没有文字、乱码、脏边、背景残留或意外裁切
 - 状态之间轮廓稳定，视觉差异符合契约
@@ -114,3 +126,13 @@ description: Breaks an approved game UI page or visual style into reusable, indi
 - 每个资源在 manifest 中单独登记
 
 工具不可用时保留提示词，将状态设为 `pending-generation`，不得伪造透明素材。
+
+## 可移植脚本调用（Codex / Cursor）
+
+以下 `<SKILL_DIR>` 取本次实际加载的 SKILL.md 所在绝对目录。
+
+```bash
+python3 <SKILL_DIR>/scripts/run.py <tool_name> <arguments>
+```
+
+本文所有 `python3 scripts/<tool_name>.py ...` / `<tool_name> ...` 命令均可用以上方式执行；工具名不带 `.py`。入口自动定位仓库或安装时一起部署的 runtime，不要求当前目录恰好是本仓库。模板/配置在 runtime 内，工作产物使用用户项目的绝对路径；`init_project` 用 `--workspace` 指定输出集合。优先恢复状态，生成与批准分别登记；无需 Figma。

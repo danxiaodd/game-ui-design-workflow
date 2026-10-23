@@ -7,7 +7,8 @@
 
 ## 输入
 
-- 策划方案：`gdd.md`
+- 权威策划：见 `workflow-state.json` 的 sources；可引用外部 GDD
+- 可选项目内策划：`gdd.md`
 - 产品需求：`prd.md`
 - 交互逻辑：`interaction.md`
 - 需求文件：`spec.md`
@@ -19,8 +20,8 @@
 ## 复现步骤
 
 1. 安装仓库中的技能。
-2. 打开本项目目录并让 Agent 读取 `gdd.md`、`prd.md`、`interaction.md`、`spec.md` 与 `contracts/`。
-3. 确认策划三文档为 `approved`（或已记录跳过）后再生图。
+2. 恢复 workflow-state，读取指定原资料及当前阶段所需契约。
+3. 完整探索先确认方向案、概念图；指定单页/独立资产任务直接从相应入口开始。
 4. 按 `plan.md` 选择一个页面 ID。
 5. 使用页面技能生成视觉稿，保存到 `assets/pages/`。
 6. 页面批准后使用组件技能，保存到 `assets/components/`。
@@ -36,7 +37,7 @@ python3 scripts/validate_project.py specs/{{PROJECT_ID}}
 
 ## 人工验收
 
-- [ ] 策划方案、PRD、交互逻辑已批准且与页面一致
+- [ ] 页面符合权威策划，视觉默认值和新增建议已区分；本次阶段的用户确认依据已记录
 - [ ] 画面比例与安全区正确
 - [ ] 主操作清晰且信息层级稳定
 - [ ] 色彩、材质、光源、描边和圆角一致
