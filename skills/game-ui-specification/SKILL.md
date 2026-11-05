@@ -28,6 +28,8 @@ description: Creates and maintains production-oriented game UI specifications an
 
 全局值与语义别名按[设计 Token 规范](references/design-tokens.md)维护；`style-contract.yaml` 是单一事实来源，不另建冲突的平行 Token 文件。
 
+手机端完整界面效果图的交付画布为宽 1080×高 2340 像素；用户明确另行指定时以用户要求为准。参考画布不代表真实设备分辨率或适配已验证。记录安全区和其他比例的布局策略；历史图、独立素材和非完整页面不强制重制。
+
 ## 必需规范
 
 ### 平台与布局

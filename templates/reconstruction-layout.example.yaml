@@ -1,0 +1,29 @@
+# 示例中的路径、坐标和哈希均为占位值，必须依据实际页面及素材填写。
+# 路径相对于此文件所在目录；不可使用绝对路径或跳出此目录。
+schema_version: 1
+page:
+  id: home-v001
+  platform: mobile
+  canvas: [1080, 2340]
+  canvas_policy: current # current | historical | user-override
+  # historical / user-override 时必须记录真实依据：
+  # exception_evidence: "来源、版本或用户指定尺寸的原话"
+  reference:
+    path: assets/pages/home-v001.png
+    sha256: REPLACE_WITH_ACTUAL_SHA256
+instances:
+  - id: home-primary-button
+    asset:
+      path: assets/sprites/button-primary.png
+      sha256: REPLACE_WITH_ACTUAL_SHA256
+      provenance: layered-source # layered-source | reconstructed | original-crop
+      transparent_required: true # 背景或原图静态裁片可为 false
+    page_rect: [80, 500, 300, 70] # x/y/width/height，页面左上原点
+    placement: pixel-exact # pixel-exact | scaled | sliced
+    visible_bbox: [4, 3, 296, 67] # alpha>0，素材左上原点，右/下不含
+    pivot: [0.5, 0.5] # 素材归一化坐标；左上为 [0, 0]
+    slice:
+      type: full
+    # 不同的页面实例可重复引用同一素材；后一个实例覆盖前一个。
+    # placement=sliced 时：
+    # slice: {type: 9-slice, margins: [16, 16, 12, 12], review_evidence: "实际预览依据"}

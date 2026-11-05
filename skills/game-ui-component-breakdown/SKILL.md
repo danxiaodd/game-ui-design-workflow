@@ -73,6 +73,7 @@ description: Breaks an approved game UI page or visual style into reusable, indi
 - 装饰可叠加，不带不透明矩形底。
 - 保持源页面的视觉权重；不要把次按钮生成得比主按钮更强。
 - 按钮、面板、弹窗和进度条填写 `slice` 元数据；9-slice margins 需要人工预览确认。
+- 面向页面还原时，区分资源 ID 与页面实例 ID；记录实际 PNG 画布、透明边界、裁切偏移、页面目标矩形、层级顺序、定位原点及来源。固定尺寸实例按目标矩形导出，复用/可拉伸实例显式记录规则；尺寸相等不能替代轮廓和内容边界检查。页面实例清单及校验见 `game-ui-sprite-sheet-splitter`。
 
 ## 单组件提示文件
 

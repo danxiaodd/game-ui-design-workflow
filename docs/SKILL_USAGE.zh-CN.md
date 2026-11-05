@@ -78,6 +78,23 @@ python3 scripts/init_project.py my-game --visual --source /Projects/MyGame/Docs/
 
 面板从生产阶段规划背景/边框/装饰/文字分开。复杂素材单独生成；小素材可规则合图。透明素材原生生成/编辑后运行真实 Alpha 检查，主体完整性和风格仍需看图。单独道具任务不要求虚构源页面，使用真实独立范围记录。
 
+## 手机页面与可还原切图
+
+新制作的手机端完整界面效果图交付为**宽 1080×高 2340 像素**；手机界面概念图也采用该尺寸。用户明确另行指定时记录实际要求；独立素材、非完整界面场景、历史图片不强制改尺寸。保存生成工具的真实输出和尺寸；使用等比缩放、留边或裁切得到新版本时记录变换，核实没有截掉关键内容。不能安全得到目标尺寸时如实报告未完成。
+
+需要还原页面时，将 `templates/reconstruction-layout.example.yaml` 复制到项目工作目录作为新版本清单，再按实际图片填写，不能直接使用占位值。`page.reference` 和各个 `asset.path` 均相对于清单所在目录，引用文件必须处于该目录内；填写真实 SHA256。手机历史图用 `platform: mobile`、`canvas_policy: historical` 和真实尺寸，记录历史依据；用户指定其他尺寸用 `user-override` 和用户实际要求，不虚构例外。
+
+每项实例的 `page_rect` 是**页面左上角**起算的 `[x,y,width,height]`，`visible_bbox` 是**素材左上角**起算的 `[left,top,right,bottom]`，右下不含边界，按实际 alpha>0 检查；`pivot` 是素材左上为 `[0,0]` 的归一化坐标。列表后项覆盖前项。相同素材可以被多个实例引用。当前清单表示一个画布内的静态页面视图，滚动后视图应另用版本/视图记录；不要将雪碧图裁切坐标当成页面位置。
+
+`pixel-exact` 强制 PNG 画布尺寸等于实例显示矩形；复用且需要缩放的实例标为 `scaled`，九宫格实例标为 `sliced` 并记录经人工预览的 margins 与依据。`transparent_required` 反映该资源的真实要求，背景和保留原图文字的裁片可以为 false。来源在 `layered-source`、`reconstructed`、`original-crop` 中选真实类型；禁止把重制或矩形裁片说成原始图层。
+
+```bash
+python3 scripts/validate_reconstruction.py /path/to/project/reconstruction-layout.yaml \
+  --report /path/to/project/reconstruction-report-v001.json
+```
+
+结果只校验尺寸、边界、透明像素、哈希与几何数据，不重采样或更改图片；校验通过不保证视觉一致，也不表示用户批准。未取得实际素材、精确坐标或视觉验收时明确保持草稿，后续需用实际页面叠加及人眼检查。
+
 ## 路径三：已有合图 → 确定性切分 → Unity
 
 先检查原图实际像素：
