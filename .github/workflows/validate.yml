@@ -2,7 +2,7 @@ name: Validate
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "codex/**"]
   pull_request:
   workflow_dispatch:
 
@@ -30,6 +30,9 @@ jobs:
 
       - name: Validate skills
         run: python scripts/validate_skills.py
+
+      - name: Validate Codex discovery paths
+        run: python scripts/validate_skills.py .agents/skills
 
       - name: Validate guofeng complete example
         run: python scripts/validate_project.py examples/guofeng-card-rpg --strict

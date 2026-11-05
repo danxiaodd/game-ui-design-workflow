@@ -54,16 +54,19 @@ def export_godot(atlas: dict[str, Any]) -> dict[str, Any]:
 def export_unity(atlas: dict[str, Any]) -> dict[str, Any]:
     sprites = []
     for name, item in atlas["sprites"].items():
+        x, y, width, height = item['region']
+        left, right, top, bottom = margins(item)
         sprites.append(
             {
                 "name": name,
-                "rect": item["region"],
+                "rect": [x, atlas['size'][1] - y - height, width, height],
                 "pivot": item.get("pivot", [0.5, 0.5]),
-                "border": margins(item),
+                "border": [left, bottom, right, top],
                 "pixelsPerUnit": 100,
             }
         )
-    return {"texture": atlas["image"], "spriteMode": "Multiple", "sprites": sprites}
+    return {"texture": atlas["image"], "spriteMode": "Multiple", "sprites": sprites,
+            "coordinateOrigin": "bottom-left", "borderOrder": ["left", "bottom", "right", "top"]}
 
 
 def export_cocos(atlas: dict[str, Any]) -> dict[str, Any]:

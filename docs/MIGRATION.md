@@ -1,5 +1,8 @@
 # 契约迁移指南
 
+> 兼容说明：本页保留原有案例/契约说明。新入口支持已有策划与分阶段任务，不再要求重写三份规划文档；当前安装、状态和切图用法见 [使用说明](SKILL_USAGE.zh-CN.md)。旧 Unity JSON 应重新导出以使用正确坐标与 border 顺序。
+
+
 本指南用于升级 `style-contract.yaml`、`screen-contract.yaml`、`component-contract.yaml`、`asset-manifest.yaml`，以及可选的 `sprite-contract.yaml`、`atlas-contract.yaml` 和 `export-contract.yaml`。也覆盖 Spec-Kit 文档增补（如 `gdd.md` / `prd.md` / `interaction.md`）。
 
 ## 迁移前

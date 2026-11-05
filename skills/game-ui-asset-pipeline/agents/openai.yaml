@@ -1,0 +1,4 @@
+interface:
+  display_name: "游戏资源与引擎交付"
+  short_description: "打包语义图片与图集，提供九宫格规格及 Unity 等引擎交付数据"
+  default_prompt: "使用 $game-ui-asset-pipeline 根据我的现有资料完成当前范围内的任务，保留真实产物和确认记录。"

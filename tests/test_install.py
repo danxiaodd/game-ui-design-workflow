@@ -9,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 INSTALLER = ROOT / "install.sh"
+SKILL_COUNT = len(list((ROOT / "skills").glob("*/SKILL.md")))
 
 
 class InstallScriptTests(unittest.TestCase):
@@ -32,7 +33,7 @@ class InstallScriptTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             installed = sorted((project / ".cursor" / "skills").glob("*/SKILL.md"))
-            self.assertEqual(len(installed), 7)
+            self.assertEqual(len(installed), SKILL_COUNT)
 
     def test_existing_skills_are_skipped_without_force(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -45,7 +46,7 @@ class InstallScriptTests(unittest.TestCase):
             result = self.run_installer("--project", str(project))
 
             self.assertEqual(result.returncode, 0, result.stderr)
-            self.assertIn("0 installed, 7 skipped", result.stdout)
+            self.assertIn(f"0 installed, {SKILL_COUNT} skipped", result.stdout)
 
     def test_force_replaces_existing_skill_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -86,7 +87,7 @@ class InstallScriptTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             installed = sorted((Path(temp) / ".cursor" / "skills").glob("*/SKILL.md"))
-            self.assertEqual(len(installed), 7)
+            self.assertEqual(len(installed), SKILL_COUNT)
 
 
 if __name__ == "__main__":

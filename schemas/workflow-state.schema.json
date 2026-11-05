@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Visual workflow journal, schema version 1",
+  "type": "object",
+  "required": ["schema_version", "sources", "capabilities", "artifacts", "events"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "sources": {"type": "array", "items": {"type": "object", "required": ["path", "sha256", "authority", "read_status"]}},
+    "capabilities": {"type": "object"},
+    "events": {"type": "array"},
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["kind", "status", "parents", "sources", "created_at", "human_qa"],
+        "properties": {
+          "kind": {"enum": ["brief", "direction", "concept", "page", "component", "delivery"]},
+          "status": {"enum": ["pending-generation", "pending-transfer", "review", "approved"]},
+          "parents": {"type": "array", "items": {"type": "string"}},
+          "sources": {"type": "object"}
+        }
+      }
+    }
+  }
+}

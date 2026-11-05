@@ -1,0 +1,4 @@
+interface:
+  display_name: "游戏素材切图"
+  short_description: "按指定区域、固定网格或透明边界切分图片并验证数量尺寸和导出完整性"
+  default_prompt: "使用 $game-ui-sprite-sheet-splitter 根据我的现有资料完成当前范围内的任务，保留真实产物和确认记录。"

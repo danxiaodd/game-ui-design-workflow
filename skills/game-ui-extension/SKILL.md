@@ -9,7 +9,7 @@ description: Extends a game concept or partial interface into a coherent screen 
 
 ## 输入
 
-读取 `gdd.md`、`prd.md`、`interaction.md`、`spec.md`、`research.md`、`contracts/style-contract.yaml`、`plan.md` 和 `contracts/screen-contract.yaml`。若用户只给一张图，先判断它在核心循环中的位置。策划三文档缺失时，先调用 `game-ui-product-design` 再延展屏幕。
+读取指定的既有策划/系统分册、`source-brief.md`、视觉方向及现有 style/screen contracts；其他文档按需读取。若只给一张图，先判断它在玩法中的位置。缺少本仓库格式的策划三文档不能阻断；使用明确标记的默认值补足视觉所需信息。完成屏幕地图后先等待用户确认范围，再逐页生产，不自行增加运营系统。
 
 需要完整分类审计时读取 [references/screen-taxonomy.md](references/screen-taxonomy.md)；普通延展不必把分类全量载入。
 
@@ -80,3 +80,13 @@ description: Extends a game concept or partial interface into a coherent screen 
 - 页面没有无入口或无出口的孤岛
 - 关键系统含空、锁定、错误和资源不足状态
 - 页面数量与项目阶段相称
+
+## 可移植脚本调用（Codex / Cursor）
+
+以下 `<SKILL_DIR>` 取本次实际加载的 SKILL.md 所在绝对目录。
+
+```bash
+python3 <SKILL_DIR>/scripts/run.py <tool_name> <arguments>
+```
+
+本文所有 `python3 scripts/<tool_name>.py ...` / `<tool_name> ...` 命令均可用以上方式执行；工具名不带 `.py`。入口自动定位仓库或安装时一起部署的 runtime，不要求当前目录恰好是本仓库。模板/配置在 runtime 内，工作产物使用用户项目的绝对路径；`init_project` 用 `--workspace` 指定输出集合。优先恢复状态，生成与批准分别登记；无需 Figma。

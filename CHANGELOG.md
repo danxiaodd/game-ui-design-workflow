@@ -1,5 +1,14 @@
 # Changelog
 
+## Codex visual-to-Unity workflow (2026-10-23)
+
+- Add existing-GDD visual direction and representative concept Skills with explicit user confirmation.
+- Add Codex discovery/install paths and bundled versioned local runtime; preserve Cursor.
+- Add immutable workflow journal, actual Alpha inspection, deterministic region/grid/trim exports and direct reviewed asset-pack handoff.
+- Preserve original page/component/atlas/engine pipelines; fix Unity origin/border mapping and legacy splitter preflight output protection.
+- Update examples, usage, research and validation notes; extend regression coverage.
+
+
 本项目遵循 [Semantic Versioning](https://semver.org/)。
 
 ## [Unreleased]

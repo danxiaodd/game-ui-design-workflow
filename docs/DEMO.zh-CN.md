@@ -1,5 +1,8 @@
 # 效果演示
 
+> 兼容说明：本页保留原有案例/契约说明。新入口支持已有策划与分阶段任务，不再要求重写三份规划文档；当前安装、状态和切图用法见 [使用说明](SKILL_USAGE.zh-CN.md)。旧 Unity JSON 应重新导出以使用正确坐标与 border 顺序。
+
+
 本页用**云阙列传（国风卡牌 RPG）**展示从生成第 1 步到 Atlas 引擎交付的完整效果。早期月宫列传示例仍保留在 [`examples/moon-palace-rpg`](../examples/moon-palace-rpg/README.md)。
 
 ## 1. 生成第 1 步：策划 / PRD / 交互

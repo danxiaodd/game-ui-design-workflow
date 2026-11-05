@@ -1,86 +1,35 @@
-# 兼容性说明
+# 兼容性与验证边界
 
-## Cursor
+## Codex / Cursor
 
-本仓库使用标准 Cursor Agent Skill 目录：
+技能使用 `SKILL.md` 的 name/description 和按需引用。Codex 从项目/用户 `.agents/skills` 发现，支持符号链接；Cursor 保留 `.cursor/skills`。仓库内链接适合 Unix/Git symlink 环境，Windows 可用 Python 复制安装器。
 
-```text
-skill-name/
-└── SKILL.md
-```
+安装器部署共享的版本化运行包和每技能 runner，离开原仓库仍能找到脚本及模板。不要只复制 SKILL.md；项目产物放到用户指定位置。Codex 的发现和元数据以[官方文档](https://learn.chatgpt.com/docs/build-skills)为准，安装路径测试不代表每个宿主已实际执行 Skill。
 
-支持：
+## 工具环境
 
-- 项目技能：`<project>/.cursor/skills/`
-- 个人技能：`~/.cursor/skills/`
-- Agent 自动触发或在请求中显式写出技能名
+- 本地 Codex、ChatGPT Work、其他 Agent 的图像工具、浏览器、凭据和文件系统不共享。
+- 核实实际可调用的生成/编辑/参考图能力；模型未知就记录 unknown。
+- 无工具：完整提示词 + pending-generation。
+- 有真实结果但本地不可读取：真实结果引用 + pending-transfer，传入后补登记，不重复生成。
+- 无 Figma、第三方服务或收费 API 前提。无需图像生成 SDK；本仓库的 Python 工具只做确定性本地处理。
 
-不要安装到 `~/.cursor/skills-cursor/`，该目录由 Cursor 管理。
+官方截至 2026-10-23 的图像文档列出 GPT Image 2.5 Sunburst/Flare 透明输出和编辑支持；宿主暴露的参数及账号可调用能力需逐次核实，详见技能内 `image-capabilities.md`。
 
-图片生成取决于当前 Cursor 环境是否提供图片工具。工具不可用时，技能会保留提示词并标记 `pending-generation`。
+## Python / 文件
 
-## Python
+Python 3.10+；CI 3.11；依赖 Pillow、PyYAML。Windows 使用 python，macOS/Linux 常用 python3；shell 包装器不是 Windows 必需。
 
-- 最低建议版本：Python 3.9
-- CI 验证版本：Python 3.11
-- 依赖：PyYAML、Pillow
+PNG/JPEG/WebP/GIF 通过 Pillow 读取真实尺寸与 Alpha 信息。PNG/WebP 声明透明时检查实际透明像素和非空主体；SVG 仅结构/尺寸校验，不等同渲染后的像素透明验收。新 process_sprites 仅导出 PNG，网格必须整除，裁剪区域不得越界。
 
-安装：
+无损矩形裁剪保留区域内像素；Alpha trim 的非零阈值会有意排除弱像素。纯色抠除不适合所有背景，复杂分离不能保证无损。
 
-```bash
-python3 -m pip install -r requirements.txt
-```
+## 交付
 
-支持 macOS 和 Linux。Windows 用户可以直接运行 Python 脚本，但 `install.sh` 需要 WSL、Git Bash 或手动复制技能目录。
+图片、独立 Sprite、打包 Atlas PNG、引擎 JSON 与配置建议均为真实文件；不生成原生 Unity SpriteAtlas、Godot 场景或 Cocos 工程。Unity JSON 坐标/边距已修正，旧导出应重建。JSON 不会自动写入项目。
 
-## 资源格式
+还需在目标引擎/设备检查边缘采样、压缩、文字、布局、状态和 9-slice。自动化测试、用户视觉确认、引擎导入与实机检查分别记录。
 
-验证脚本当前执行真实文件检查：
+## 版本
 
-- PNG：读取实际宽高和 Alpha / `tRNS` 透明信息
-- SVG：读取 `width`、`height` 或 `viewBox`
-- ZIP：雪碧图组件包检查文件格式和可解压性
-- Atlas：RGBA PNG 与 JSON regions，不旋转素材
-- 引擎交付：Godot、Unity、Cocos JSON handoff
-
-其他格式：
-
-- JPG、WEBP、GIF 等资源路径仍会检查
-- 实际尺寸与透明通道暂不检查，会产生警告
-- `--strict` 会把该警告视为错误
-
-需要严格交付时，页面优先使用 PNG，透明控件使用 PNG 或 SVG。
-
-雪碧图自动拆分支持透明背景和近似纯色背景。复杂渐变背景、元素遮挡或粘连无法可靠自动恢复，应重新生成规范雪碧图。
-
-内置 exporter 不生成原生 Godot、Unity 或 Cocos 工程文件；具体边界见 [Factory v2 架构](GAME_UI_FACTORY_V2.zh-CN.md)。
-
-## 图片比例
-
-图片工具可能只支持有限比例。必须在 manifest 记录实际尺寸，不能把目标尺寸写成实际尺寸。
-
-处理方式：
-
-1. 选择工具最接近的比例。
-2. 记录真实输出尺寸。
-3. 重新生成或使用图像工具裁切。
-4. 裁切后再次运行严格校验。
-
-## 中文文字
-
-生成模型对中文排版的可靠性不固定：
-
-- 原型阶段可以使用短词验证层级。
-- 正式页面建议生成无文字底板，再由设计或客户端排版。
-- 出现乱码时不得批准资源。
-- 按钮和卡片组件默认不生成文字。
-
-## 契约版本
-
-当前模板使用：
-
-```yaml
-schema_version: 1
-```
-
-不同 `schema_version` 的项目不应直接混用。升级方法见 [MIGRATION.md](MIGRATION.md)。
+既有 contracts 保持 schema_version 1；新增 workflow-state 是独立的版本日志。待确认输出不会自动批准；状态工具记录用户依据但不验证身份。状态采用原子文件替换，按单写入者使用；不支持多 Agent 同时写同一状态。

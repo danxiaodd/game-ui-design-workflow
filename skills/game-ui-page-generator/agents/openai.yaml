@@ -1,0 +1,4 @@
+interface:
+  display_name: "游戏 UI 单页设计"
+  short_description: "沿用既定视觉设计单页与限定模块精修，保存版本并等待用户确认"
+  default_prompt: "使用 $game-ui-page-generator 根据我的现有资料完成当前范围内的任务，保留真实产物和确认记录。"

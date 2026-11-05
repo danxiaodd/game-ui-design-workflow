@@ -1,226 +1,130 @@
-# Game UI Design Workflow
+# Game UI Design Workflow · Codex / Cursor
 
-[![Validate](https://github.com/guiguiyan930-source/game-ui-design-workflow/actions/workflows/validate.yml/badge.svg)](https://github.com/guiguiyan930-source/game-ui-design-workflow/actions/workflows/validate.yml)
-[![Release](https://img.shields.io/github/v/release/guiguiyan930-source/game-ui-design-workflow)](https://github.com/guiguiyan930-source/game-ui-design-workflow/releases)
-[![License](https://img.shields.io/github/license/guiguiyan930-source/game-ui-design-workflow)](LICENSE)
+[![Validate](https://github.com/danxiaodd/game-ui-design-workflow/actions/workflows/validate.yml/badge.svg)](https://github.com/danxiaodd/game-ui-design-workflow/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-![Game UI Design Workflow](docs/assets/social-preview.png)
+复用已有游戏策划，从美术视觉探索逐步制作、检查和交付游戏 UI 资源。支持 Codex 与 Cursor，无需 Figma。
 
-一个面向 Cursor Agent 的游戏 UI 设计技能仓库。它用 Spec-Kit 风格的项目文档串联能力：
+**已有策划 → 美术视觉方向案 → 用户确认 → 代表性概念图 → 用户反馈 → 正式 UI 页面 → 用户确认 → 组件/素材 → 确定性切图 → Unity 等引擎交付。**
 
-1. **策划与需求（生成第一步）**：游戏策划方案（GDD）、PRD、UI 交互逻辑 → `game-ui-product-design`
-2. UI 规范：建立视觉语言、设计令牌、布局和交互规则。
-3. UI 延展：从玩法与玩家旅程扩展完整屏幕地图。
-4. 页面生成：逐页生成方案、提示词与视觉稿。
-5. 组件拆解：把已批准页面拆成可复用、可交付的独立素材。
-6. 雪碧图拆分：去掉元素文字，将组件合图切成单元素透明 PNG，并打包 ZIP。
-7. 资产交付：语义命名、9-slice、Atlas 与 Godot / Unity / Cocos JSON。
-
-`game-ui-workflow` 是总控技能；阶段技能也可独立调用。项目事实保存在 `specs/<project>/`，避免只依赖对话上下文。
-
-## 使用场景
-
-- 只有游戏概念，需要先写策划方案、PRD 和 UI 交互逻辑再生图。
-- 只有游戏概念或参考图，需要先生成一张可讨论的 UI 原型视觉。
-- 已有页面结构，需要切换国风、科幻、卡通等视觉方向并保留版本对比。
-- 已有首页，需要延展编队、关卡、战斗、商城、活动等完整页面系统。
-- 页面已批准，需要拆成透明背景按钮、图标、卡片、角色和装饰素材。
-- 已生成组件雪碧图，需要自动切成单元素 PNG 并提供 ZIP 下载包。
-- 已有语义 PNG，需要生成 9-slice、Atlas 和引擎交付清单。
-- 团队需要把 UI 决策沉淀为可复用契约，避免连续页面风格漂移。
-- 设计成果需要交付开发，希望页面、组件、状态、尺寸和资源来源可追踪。
-
-不适合直接用来替代游戏客户端实现、服务端接口设计或未经确认的大批量最终生图。
-
-## 30 秒使用方法
-
-安装到当前项目：
-
-```bash
-./install.sh --project /path/to/your-game
-```
-
-初始化 UI 工作区：
-
-```bash
-python3 scripts/init_project.py your-game-id
-```
-
-在 Cursor 中调用：
-
-```text
-使用 game-ui-workflow，读取 @specs/your-game-id 和我的参考图。
-依次执行第 1 步策划与 PRD（game-ui-product-design），再执行原型生成视觉、UI 风格切换、UI 延展、UI 组件拆解、雪碧图拆分打包和 Atlas 引擎交付。
-每一步完成后停止，列出检查项，并给出可直接复制的下一步调用文本。
-```
-
-详细方法见 [中文调用指南](docs/SKILL_USAGE.zh-CN.md)。
-
-## 工作流（第 1 步起）
-
-```text
-第 1 步  策划方案 + PRD + UI 交互逻辑（批准）
-第 2 步  原型生成视觉
-第 3 步  UI 风格切换与批准
-第 4 步  UI 页面延展与逐页生成
-第 5 步  UI 组件拆解与雪碧图生成
-第 6 步  雪碧图拆分、单元素 PNG 与 ZIP 打包
-第 7 步  语义命名、9-slice、Atlas 与引擎 JSON
-```
-
-每一步都会说明输入、输出、检查项、人工门禁和可直接复制的下一步调用文本。**第 1 步未批准时不会进入原型生图**；页面未批准时不会提前拆解组件。
-
-## 特性
-
-- 8 个可自动触发或显式调用的 Cursor Agent Skills
-- 需求、研究、计划、任务、契约和复现文档持久化
-- 页面和组件提示词、图片、状态、版本及来源可追踪
-- PNG 真实尺寸、透明通道和 SVG 尺寸校验
-- 自动化测试与 GitHub Actions 持续验证
-- 图片工具不可用时安全降级为 `pending-generation`
-
-## 目录
-
-```text
-skills/
-  game-ui-workflow/
-  game-ui-product-design/
-  game-ui-specification/
-  game-ui-extension/
-  game-ui-page-generator/
-  game-ui-component-breakdown/
-  game-ui-sprite-sheet-splitter/
-  game-ui-asset-pipeline/
-templates/
-  spec-kit/
-  contracts/
-scripts/
-  init_project.py
-  validate_project.py
-  validate_skills.py
-  split_sprite_sheet.py
-  build_sprite_atlas.py
-  export_engine_manifest.py
-schemas/
-config/
-tests/
-install.sh
-specs/
-examples/
-```
+可以从任一已有阶段开始。指定一个页面、一个道具或一批图片时只完成相应任务；不要求重新创建 GDD、PRD 和交互三份文档。
 
 ## 安装
 
-使用一键安装脚本安装到指定项目：
+Python 3.10+，CI 使用 3.11。仅依赖 Pillow、PyYAML；无生图 SDK、API Key 或第三方设计服务要求。
 
 ```bash
-./install.sh --project /path/to/your-game
+git clone https://github.com/danxiaodd/game-ui-design-workflow.git
+cd game-ui-design-workflow
+python3 -m pip install -r requirements.txt
+
+# Codex：项目安装（目标目录应已存在）
+python3 scripts/install_skills.py --project /absolute/path/to/project --agent codex
+# 或个人安装：~/.agents/skills
+python3 scripts/install_skills.py --personal --agent codex
+
+# Cursor：保留原安装入口及默认行为
+sh install.sh --project /absolute/path/to/project
+# Windows 可直接使用 Python 安装器
+python scripts/install_skills.py --project C:/Projects/MyGame --agent cursor
 ```
 
-安装为个人技能：
+默认跳过已有同名技能，升级可用 `--force`；预览可用 `--dry-run`。安装器一并部署版本化的脚本、模板、配置和许可证，已安装技能无需依赖原仓库的当前工作目录。旧运行包保留，避免影响被跳过的技能。
 
-```bash
-./install.sh --personal
-```
+本仓库 `.agents/skills/` 的符号链接支持在仓库内直接发现 10 个技能。Windows 未启用 Git symlink 时，使用复制安装器安装到另一个项目。Codex 按[官方规范](https://learn.chatgpt.com/docs/build-skills)发现本地 Skill；需要时重启/重新加载宿主。CLI/IDE 中可用 `/skills` 或 `$技能名`；ChatGPT Work 使用自己的 Skill 安装与选择入口，GitHub 连接本身不会自动安装这些技能或共享本地文件。
 
-默认不会覆盖同名技能；确认升级时增加 `--force`。不要安装到 Cursor 内置的 `~/.cursor/skills-cursor/`。
+## 从已有 GDD 开始
 
-完整的安装、显式调用、分阶段确认、页面批准和组件拆解示例见
-[游戏 UI 技能调用指南](docs/SKILL_USAGE.zh-CN.md)。
-
-完整交付示例见 [云阙列传：国风卡牌 RPG 完整交付](examples/guofeng-card-rpg/README.md)。
-
-Factory v2 资产生产示例见 [欧美卡通生存商店：Token、语义切图、Atlas 与引擎 JSON](examples/factory-v2-shop/README.md)。
-
-更多分阶段示例见 [示例索引](examples/README.md)：
-
-- [云阙列传（主案例）](examples/guofeng-card-rpg/README.md)
-- [月宫列传](examples/moon-palace-rpg/README.md)
-- [UI 风格切换](examples/style-switch/README.md)
-- [UI 页面延展](examples/screen-extension/README.md)
-- [UI 组件包拆解](examples/component-pack/README.md)
-- [雪碧图拆分与 PNG 打包](examples/sprite-sheet-splitting/README.md)
-- [Game UI Factory v2 商店案例](examples/factory-v2-shop/README.md)
-
-视觉对比和完整操作链路见 [效果演示](docs/DEMO.zh-CN.md)。
-
-## 快速开始
-
-```bash
-python3 scripts/init_project.py guofeng-card-rpg
-python3 scripts/validate_project.py examples/guofeng-card-rpg
-```
-
-然后在 Cursor 中提出：
+在 Codex 中：
 
 ```text
-使用 game-ui-workflow，根据参考图为一款国风卡牌 RPG 建立完整 UI 项目，
-先完成规范和屏幕地图，再生成首页视觉，批准后拆解首页组件。
+使用 $game-ui-workflow。
+项目输出目录：/Projects/MyGame/art-workflow。
+读取已有 /Projects/MyGame/Docs/GDD.md 及我指定的系统分册。
+先提炼视觉需求，再给出简洁美术视觉方向案并明确推荐，完成后等待我确认。
+区分已确定规则、推导/默认值和新增建议，不修改或复制原始策划。
 ```
 
-端到端流程：
+方向案覆盖整体风格、人物比例、世界/场景/设施、UI、色彩材质光影及参考理由；首张概念图目标与提示词一起保存。方向确认后再实际生图，概念图不自动成为已批准的正式页面。
+
+已有概念图可以直接说：
 
 ```text
-spec.md
-  → research.md
-  → contracts/style-contract.yaml
-  → plan.md + contracts/screen-contract.yaml
-  → assets/pages/ + asset-manifest.yaml
-  → contracts/component-contract.yaml + assets/components/
-  → tasks.md + quickstart.md + validation
+使用 $game-ui-page-generator，参考我已认可的概念图，仅设计商店页面。
+沿用现有玩法和风格，先完成一页并等待确认，不重新做整套策划。
 ```
 
-## 阶段调用
+## 技能
 
-- “建立这个游戏的 UI 规范” → `game-ui-specification`
-- “基于现有首页延展完整页面” → `game-ui-extension`
-- “生成商城页视觉并保存图片” → `game-ui-page-generator`
-- “把这个页面拆成透明背景组件” → `game-ui-component-breakdown`
-- “把组件雪碧图切成单个 PNG 并打包” → `game-ui-sprite-sheet-splitter`
-- “生成 9-slice、Atlas 和引擎 JSON” → `game-ui-asset-pipeline`
-- “从需求一直做到组件交付” → `game-ui-workflow`
+| 技能 | 职责 |
+|---|---|
+| `game-ui-workflow` | 状态恢复、最小路径和阶段编排 |
+| `game-visual-direction` | 读取既有资料、简洁美术方向案 |
+| `game-concept-image` | 实际代表图生成/编辑、版本与降级 |
+| `game-ui-product-design` | 用户需要时编写策划/PRD/交互 |
+| `game-ui-specification` | 设计令牌、布局、材质与状态规范 |
+| `game-ui-extension` | 页面清单、导航与操作链路 |
+| `game-ui-page-generator` | 单页设计、限定精修、视觉验收 |
+| `game-ui-component-breakdown` | 组件复用、独立素材/规则合图生产 |
+| `game-ui-sprite-sheet-splitter` | 区域/网格/Alpha 裁剪、连通检测、ZIP |
+| `game-ui-asset-pipeline` | Atlas、9-slice、Unity/Cocos/Godot 交付 |
 
-图片生成工具可用时，技能应实际生成并保存图片；不可用时保留完整提示词，将资源状态标为 `pending-generation`，不能伪造文件。
+## 透明素材与程序切图
 
-## 项目约束
+复杂道具/角色/装饰优先单独生成；重复小图标可按规则网格生成合图。优先使用实际工具支持的原生透明输出和编辑。当前模型与能力以宿主实际暴露工具为准；没有工具时保存提示词和待生成状态，不制造图片或假路径。
 
-- `spec.md` 是需求与验收标准的唯一来源。
-- `contracts/` 是跨阶段视觉一致性的唯一来源；后续阶段不得静默改写。
-- 页面生成一次只处理一个页面，批准后才进入组件拆解。
-- 所有资源必须登记到 `contracts/asset-manifest.yaml`。
-- 修改项目后运行校验脚本；失败项修复前不得宣称交付完成。
+```bash
+python3 scripts/inspect_image.py /path/to/actual.png --require-transparent
+python3 scripts/process_sprites.py split /path/to/sheet.png \
+  --layout config/grid-example.yaml --output /path/to/pack-v001
+python3 scripts/process_sprites.py verify /path/to/pack-v001
+```
 
-## 质量检查
+`config/grid-example.yaml` 是示例参数，必须按真实图片布局调整。新工具支持 `grid`、`regions`、`trim`，输出独立 PNG、坐标/尺寸/哈希清单、联系表和 ZIP，拒绝覆盖已有版本。原有 `split_sprite_sheet.py` 保留用于 Alpha/纯色背景连通区域检测。
+
+真实 Alpha 检查不等于边缘或艺术质量通过。复杂背景、粘连与遮挡可要求明确区域、独立素材或人工修正；不承诺无损恢复合成图的原始图层。
+
+## Unity 交付
+
+素材经过用户确认后：
+
+```bash
+python3 scripts/export_asset_pack.py /path/to/pack-v001 \
+  --output /path/to/delivery-v001 \
+  --review-evidence '用户确认该批素材版本的原话与记录位置'
+```
+
+交付包包含独立 PNG、Atlas PNG/JSON、Unity/Godot/Cocos JSON、SpriteAtlas 配置建议、来源记录、Unity 导入说明与 ZIP。Unity rect 已转为左下角坐标，border 为左/下/右/上。JSON/配置建议不会自动生成 Unity 原生 `.spriteatlas` 或修改工程；Editor 导入器是后续可选扩展。
+
+原有 `build_sprite_atlas.py`、`export_engine_manifest.py` 和完整契约链路继续可用。
+
+## 状态、确认与恢复
+
+`workflow-state.json` 管阶段版本、来源、能力和确认依据；contracts/manifest 管资源细节。输出和提示词以不可覆盖 ID 保存在 `history/`，批准需要记录真实用户依据。单写入者操作；这是本地工作日志，不是身份认证或权限系统。
+
+```bash
+python3 scripts/workflow_state.py /path/to/project resume
+```
+
+状态区分待生成、已生成待传入、待确认、已确认及来源/父版本变化。图像成功但本地无法访问时保留真实结果引用，待传入后补登记，不重复生成。
+
+## 示例、验证和边界
+
+- [操作说明：三条可直接使用的路径](docs/SKILL_USAGE.zh-CN.md)
+- [视觉探索示例：复用现有策划](examples/visual-exploration/README.md)
+- [完整国风案例](examples/guofeng-card-rpg/) · [月宫案例](examples/moon-palace-rpg/) · [Factory v2 商店](examples/factory-v2-shop/)
+- [兼容性与工具边界](docs/COMPATIBILITY.md) · [研究与取舍](docs/RESEARCH.zh-CN.md) · [验收记录](docs/VALIDATION.zh-CN.md)
+- [原有 Factory v2 管线](docs/GAME_UI_FACTORY_V2.zh-CN.md) · [迁移说明](docs/MIGRATION.md)
 
 ```bash
 python3 -m unittest discover -s tests -v
 python3 scripts/validate_skills.py
+python3 scripts/validate_skills.py .agents/skills
 python3 scripts/validate_project.py examples/guofeng-card-rpg --strict
 python3 scripts/validate_project.py examples/moon-palace-rpg --strict
 python3 scripts/validate_project.py examples/factory-v2-shop --strict
 ```
 
-GitHub Actions 会在 push 和 pull request 时自动运行这些检查。
+自动化检查不证明真实生图、艺术质量或 Unity 导入已通过。实际运行时分别记录。项目仍为探索/草稿时不会假装生产契约已经严格验收。
 
-## 参与贡献与版本
-
-- 贡献方式：[CONTRIBUTING.md](CONTRIBUTING.md)
-- 版本记录：[CHANGELOG.md](CHANGELOG.md)
-- 发布与安装：[docs/RELEASE.md](docs/RELEASE.md)
-- 兼容性说明：[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)
-- Factory v2 架构：[docs/GAME_UI_FACTORY_V2.zh-CN.md](docs/GAME_UI_FACTORY_V2.zh-CN.md)
-- 路线图与未实现能力：[docs/ROADMAP.md](docs/ROADMAP.md)
-- 隐私与版权：[docs/SECURITY.md](docs/SECURITY.md)
-- 契约迁移：[docs/MIGRATION.md](docs/MIGRATION.md)
-- 问题与建议：[GitHub Issues](https://github.com/guiguiyan930-source/game-ui-design-workflow/issues)
-
-## 项目来源与演进
-
-本仓库由作者此前创建并维护的四个游戏 UI 技能整合演进而来：
-
-- [Game-UI-Extension](https://github.com/guiguiyan930-source/Game-UI-Extension)
-- [game-ui-page-generator](https://github.com/guiguiyan930-source/game-ui-page-generator)
-- [game-ui-specification](https://github.com/guiguiyan930-source/game-ui-specification)
-- [game-ui-component-breakdown](https://github.com/guiguiyan930-source/game-ui-component-breakdown)
-
-这些仓库属于同一作者的早期实践，并非本项目引入的第三方技能。整合原因、能力映射和新增内容见 [ORIGIN.md](ORIGIN.md)。
+保留上游 MIT 许可证与[来源说明](ORIGIN.md)。

@@ -1,0 +1,4 @@
+interface:
+  display_name: "游戏代表性概念图"
+  short_description: "根据已确认视觉方向调用实际图像工具，保存概念图版本并等待反馈"
+  default_prompt: "使用 $game-concept-image 根据已确认的视觉方向生成一张代表性概念图。"
